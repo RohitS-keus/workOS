@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WorkOS Integration</title>
+  <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body {
+      padding-top: 50px;
+    }
+    .form-container {
+      max-width: 500px;
+      margin: auto;
+      padding: 20px;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 5px;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="form-container">
+      <h1 class="mb-4">Register</h1>
+      <form id="registerForm">
+        <div class="form-group">
+          <input type="email" id="email" class="form-control" placeholder="Email" required>
+        </div>
+        <div class="form-group">
+          <input type="password" id="password" class="form-control" placeholder="Password" required>
+        </div>
+        <div class="form-group">
+          <input type="text" id="firstName" class="form-control" placeholder="First Name" required>
+        </div>
+        <div class="form-group">
+          <input type="text" id="lastName" class="form-control" placeholder="Last Name" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Register</button>
+        <p id="signupLogs" class="mt-3 text-center"></p>
+      </form>
+    </div>
+    
+    <div class="form-container">
+      <h1 class="mb-4">Login</h1>
+      <form id="loginForm">
+        <div class="form-group">
+          <input type="email" id="loginEmail" class="form-control" placeholder="Email" required>
+        </div>
+        <div class="form-group">
+          <input type="password" id="loginPassword" class="form-control" placeholder="Password" required>
+        </div>
+        <div class="form-group">
+          <input type="text" id="loginClientId" class="form-control" placeholder="Client ID" required>
+        </div>
+        <button type="submit" class="btn btn-primary btn-block">Login</button>
+        <p id="loginLogs" class="mt-3 text-center"></p>
+      </form>
+    </div>
+
+    <div class="form-container">
+      <h1 class="mb-4">SSO Login</h1>
+      <button id="ssoLoginButton" class="btn btn-primary btn-block">Login with SSO</button>
+    </div>
+
+    <div class="form-container">
+      <h1 class="mb-4">Email Verification</h1>
+      <input type="text" id="verificationCode" class="form-control mb-2" placeholder="Verification Code">
+      <button id="verifyEmailButton" class="btn btn-success btn-block">Verify Email</button>
+      <p id="verificationLogs" class="mt-3 text-center"></p>
+    </div>
+  </div>
+
+  <script>
+    document.getElementById('registerForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const email = document.getElementById('email').value;
+      const password = document.getElementById('password').value;
+      const firstName = document.getElementById('firstName').value;
+      const lastName = document.getElementById('lastName').value;
+      
+      try {
+        const response = await fetch('http://localhost:4000/api/user/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, firstName, lastName }),
+        });
+
+        const data = await response.json();
+        document.getElementById('signupLogs').innerText = data.message || 'User registered successfully';
+        if (response.ok) {
+          alert('User registered successfully');
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while registering.');
+      }
+    });
+
+    document.getElementById('loginForm').addEventListener('submit', async (event) => {
+      event.preventDefault();
+      const email = document.getElementById('loginEmail').value;
+      const password = document.getElementById('loginPassword').value;
+      const clientId = document.getElementById('loginClientId').value;
+
+      try {
+        const response = await fetch('http://localhost:4000/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password, clientId }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          localStorage.setItem('token', data.token);
+          document.getElementById('loginLogs').innerText = 'Login successful';
+          alert('Login successful');
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while logging in.');
+      }
+    });
+
+    document.getElementById('ssoLoginButton').addEventListener('click', async () => {
+      try {
+        const response = await fetch('http://localhost:4000/api/auth/get-authorization-url', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ clientId: 'client_01J2K5VGRESTXCFK7NC308D2TP', redirectUri: 'http://localhost:4000/redirect', provider: 'GoogleOAuth' }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          window.location.href = data.authorizationUrl;
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while initiating SSO login.');
+      }
+    });
+
+    document.getElementById('verifyEmailButton').addEventListener('click', async () => {
+      const code = document.getElementById('verificationCode').value;
+      
+      try {
+        const response = await fetch('http://localhost:4000/api/auth/emailVerify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          document.getElementById('verificationLogs').innerText = 'Email verified successfully';
+          alert('Email verified successfully');
+        } else {
+          alert('Error: ' + data.message);
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        alert('An error occurred while verifying email.');
+      }
+    });
+  </script>
+</body>
+</html>

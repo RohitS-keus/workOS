@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Redirecting...</title>
+</head>
+<body>
+  <script>
+    (async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const code = urlParams.get('code');
+      
+      if (code) {
+        const response = await fetch('http://localhost:4000/api/auth/authenticate-with-code', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, clientId: 'client_01J2K5VGRESTXCFK7NC308D2TP' }),
+        });
+
+        const data = await response.json();
+        if (response.ok) {
+          localStorage.setItem('token', data.token);
+          window.location.href = '/dashboard.html';
+        } else {
+          alert('Error: ' + data.message);
+          window.location.href = '/login.html';
+        }
+      } else {
+        window.location.href = '/login.html';
+      }
+    })();
+  </script>
+</body>
+</html>
